@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estante da Biblioteca - Enigma da Passagem Secreta</title>
+    <style>
+        /* CSS PURA - OTIMIZADA PARA CEF / CHROMIUM ANTIGO DO TABLETOP SIMULATOR */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: #0e0d0c;
+            color: #e6d7c3;
+            font-family: 'Georgia', 'Times New Roman', serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 850px;
+            background: #181512;
+            border: 4px solid #8b6b3e;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.9);
+            position: relative;
+        }
+
+        /* CABEÇALHO E MODO SWAPPER */
+        header {
+            text-align: center;
+            border-bottom: 2px solid #5a4325;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        h1 {
+            color: #d4af37;
+            font-size: 24px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 1px 1px 3px #000;
+        }
+
+        .admin-toggle {
+            position: absolute;
+            right: 0;
+            top: 0;
+            background: #2b2319;
+            color: #d4af37;
+            border: 1px solid #8b6b3e;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            font-family: sans-serif;
+            font-weight: bold;
+        }
+
+        .admin-toggle:hover {
+            background: #423424;
+        }
+
+        /* CLUES / PISTAS */
+        .clue-box {
+            background: #221c17;
+            border: 1px dashed #8b6b3e;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-style: italic;
+            color: #d0c2b0;
+            font-size: 15px;
+            line-height: 1.5;
+            text-align: center;
+            white-space: pre-wrap;
+        }
+
+        /* LIVROS / ESTANTE */
+        .shelf-container {
+            background: #2d2015;
+            border: 3px solid #4a3421;
+            border-radius: 6px;
+            padding: 20px 15px 10px 15px;
+            margin-bottom: 20px;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
+        }
+
+        .books-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .book-btn {
+            background: #4a1c1b;
+            color: #f1e5d1;
+            border: 2px solid #a37c44;
+            border-radius: 4px;
+            padding: 15px 10px;
+            width: 150px;
+            min-height: 90px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 2px 4px 6px rgba(0,0,0,0.5);
+            position: relative;
+            transition: background 0.2s;
+        }
+
+        /* CORES VARIADAS PARA OS LIVROS PARA FACILITAR VISUALIZAÇÃO */
+        .book-btn:nth-child(2n) { background: #1b3b2b; }
+        .book-btn:nth-child(3n) { background: #1b283b; }
+        .book-btn:nth-child(4n) { background: #3b2b1b; }
+        .book-btn:nth-child(5n) { background: #351b3b; }
+
+        .book-btn.selected {
+            border: 3px solid #ffea79;
+            box-shadow: 0 0 12px #ffea79;
+            transform: translateY(-4px);
+        }
+
+        .book-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #d4af37;
+            color: #000;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            border: 1px solid #000;
+        }
+
+        /* DISPLAY DE SEQUÊNCIA SELECIONADA */
+        .sequence-tracker {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #a89988;
+        }
+
+        .sequence-list {
+            color: #d4af37;
+            font-weight: bold;
+            margin-top: 5px;
+            min-height: 20px;
+        }
+
+        /* PAINEL DE AÇÕES DO JOGADOR */
+        .actions-panel {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 2px solid;
+            font-family: sans-serif;
+            text-transform: uppercase;
+        }
+
+        .btn-primary {
+            background: #8b6b3e;
+            color: #fff;
+            border-color: #d4af37;
+        }
+
+        .btn-primary:hover {
+            background: #a37d49;
+        }
+
+        .btn-secondary {
+            background: #332b24;
+            color: #c2b4a3;
+            border-color: #5a493a;
+        }
+
+        .btn-secondary:hover {
+            background: #473d33;
+        }
+
+        /* FEEDBACK / MENSAGENS DE SUCESSO E ERRO */
+        .message-box {
+            display: none;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            margin-top: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            line-height: 1.4;
+        }
+
+        .message-success {
+            background: #1e3a1e;
+            color: #a3ffb0;
+            border: 2px solid #38b000;
+        }
+
+        .message-error {
+            background: #3a1e1e;
+            color: #ffa3a3;
+            border: 2px solid #b00000;
+        }
+
+        /* PAINEL DO MESTRE (ADMIN) */
+        .admin-panel {
+            display: none;
+            background: #110e0c;
+            border: 2px solid #d4af37;
+            border-radius: 6px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .admin-panel h2 {
+            color: #d4af37;
+            font-size: 18px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #332b24;
+            padding-bottom: 5px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 13px;
+            color: #c2b4a3;
+            font-family: sans-serif;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            background: #221c17;
+            border: 1px solid #5a4325;
+            color: #fff;
+            border-radius: 4px;
+            font-family: sans-serif;
+            font-size: 14px;
+        }
+
+        textarea.form-control {
+            height: 70px;
+            resize: vertical;
+        }
+
+        .authors-selection-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 5px;
+        }
+
+        .author-chip {
+            background: #2b2319;
+            border: 1px solid #5a4325;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            color: #d0c2b0;
+        }
+
+        .author-chip.active {
+            background: #8b6b3e;
+            color: #fff;
+            border-color: #d4af37;
+        }
+
+        /* LAYOUT RESPONSIVO */
+        @media (max-width: 600px) {
+            .book-btn {
+                width: 45%;
+                min-height: 80px;
+                font-size: 12px;
+            }
+            .btn {
+                width: 100%;
+                padding: 10px;
+            }
+            .actions-panel {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Estante da Biblioteca</h1>
+        <button class="admin-toggle" id="adminToggleBtn" onclick="toggleAdminPanel()">⚙ Painel do Mestre</button>
+    </header>
+
+    <!-- MODO JOGADOR -->
+    <div id="playerView">
+        <div class="clue-box" id="clueText">
+            "Para abrir, vocês precisam puxar os livros na ordem exata definida pelos grandes pensadores..."
+        </div>
+
+        <div class="shelf-container">
+            <div class="books-grid" id="booksGrid">
+                <!-- Livros gerados dinamicamente via Javascript -->
+            </div>
+        </div>
+
+        <div class="sequence-tracker">
+            Ordem de livros selecionada:
+            <div class="sequence-list" id="selectedSequenceText">Nenhum livro selecionado</div>
+        </div>
+
+        <div class="actions-panel">
+            <button class="btn btn-primary" onclick="checkSolution()">🔍 Puxar Livros</button>
+            <button class="btn btn-secondary" onclick="resetSelection()">🔄 Resetar Escolha</button>
+        </div>
+
+        <div id="feedbackMessage" class="message-box"></div>
+    </div>
+
+    <!-- PAINEL DO MESTRE DE JOGO -->
+    <div id="adminPanel" class="admin-panel">
+        <h2>Configurações do Mestre de Jogo</h2>
+
+        <div class="form-group">
+            <label>Texto da Pista / Enigma:</label>
+            <textarea id="adminClueInput" class="form-control"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Mensagem quando a passagem Secreta abrir (Sucesso):</label>
+            <textarea id="adminSuccessInput" class="form-control"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Definir Sequência Correta (Clique nos autores na ordem exata de 3 a 5 passos):</label>
+            <div class="authors-selection-list" id="adminAuthorsList">
+                <!-- Opções de autores para o Mestre -->
+            </div>
+            <div style="margin-top: 8px; font-size: 12px; color: #d4af37;" id="adminCurrentSeqText">
+                Sequência Atual: Nenhuma
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="btn btn-primary" style="flex: 1;" onclick="saveAdminSettings()">💾 Salvar Alterações</button>
+            <button class="btn btn-secondary" style="flex: 1;" onclick="clearAdminSequence()">🧹 Limpar Sequência</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // LISTA PADRÃO DE LIVROS/AUTORES
+    const ALL_AUTHORS = [
+        "Machado de Assis",
+        "J.R.R. Tolkien",
+        "Isaac Asimov",
+        "Agatha Christie",
+        "Arthur Conan Doyle",
+        "H.P. Lovecraft",
+        "Mary Shelley",
+        "Edgar Allan Poe"
+    ];
+
+    // ESTADO PADRÃO DA APLICAÇÃO
+    let config = {
+        clue: "A sabedoria do Realismo Brasileiro leva ao início.\nSeguido pelo criador de Mundos Fantásticos.\nDepois, a mente por trás da Robótica e da Ficção.\nE por fim, a Rainha do Mistério.",
+        successMsg: "🔓 Um rangido pesado soa atrás da estante! Ela desliza lentamente para o lado, revelando uma passagem secreta escura...",
+        correctSequence: ["Machado de Assis", "J.R.R. Tolkien", "Isaac Asimov", "Agatha Christie"]
+    };
+
+    let selectedBooks = [];
+    let adminTempSequence = [];
+
+    // INICIALIZAÇÃO
+    window.onload = function() {
+        loadConfigFromStorage();
+        renderPlayerShelf();
+        renderAdminAuthors();
+        updateClueDisplay();
+    };
+
+    // MANTÉM CONFIGURAÇÕES SALVAS NO NAVEGADOR
+    function loadConfigFromStorage() {
+        try {
+            const saved = localStorage.getItem('library_puzzle_config');
+            if (saved) {
+                config = JSON.parse(saved);
+            }
+        } catch(e) {
+            console.log("LocalStorage inacessível ou sem suporte");
+        }
+    }
+
+    function saveConfigToStorage() {
+        try {
+            localStorage.setItem('library_puzzle_config', JSON.stringify(config));
+        } catch(e) {
+            console.log("Erro ao salvar no LocalStorage");
+        }
+    }
+
+    // RENDERIZA A ESTANTE DE LIVROS DO JOGADOR
+    function renderPlayerShelf() {
+        const grid = document.getElementById('booksGrid');
+        grid.innerHTML = '';
+
+        ALL_AUTHORS.forEach((author) => {
+            const index = selectedBooks.indexOf(author);
+            const isSelected = index !== -1;
+
+            const btn = document.createElement('div');
+            btn.className = 'book-btn' + (isSelected ? ' selected' : '');
+            btn.onclick = () => toggleBookSelection(author);
+
+            btn.innerHTML = `<span>${author}</span>`;
+
+            if (isSelected) {
+                const badge = document.createElement('div');
+                badge.className = 'book-badge';
+                badge.innerText = (index + 1);
+                btn.appendChild(badge);
+            }
+
+            grid.appendChild(btn);
+        });
+
+        updateSequenceTracker();
+    }
+
+    // ALTERNA SELEÇÃO DO LIVRO PELO JOGADOR
+    function toggleBookSelection(author) {
+        const index = selectedBooks.indexOf(author);
+
+        if (index !== -1) {
+            // Se já foi selecionado, remove
+            selectedBooks.splice(index, 1);
+        } else {
+            // Adiciona se ainda não foi selecionado
+            selectedBooks.push(author);
+        }
+
+        renderPlayerShelf();
+        hideMessage();
+    }
+
+    function updateSequenceTracker() {
+        const textDisplay = document.getElementById('selectedSequenceText');
+        if (selectedBooks.length === 0) {
+            textDisplay.innerText = "Nenhum livro selecionado";
+        } else {
+            textDisplay.innerText = selectedBooks.join(" ➔ ");
+        }
+    }
+
+    function resetSelection() {
+        selectedBooks = [];
+        renderPlayerShelf();
+        hideMessage();
+    }
+
+    // VERIFICA SE A COMBINAÇÃO ESTÁ CORRETA
+    function checkSolution() {
+        const msgBox = document.getElementById('feedbackMessage');
+        
+        if (selectedBooks.length === 0) {
+            showMessage("Selecione pelo menos um livro na estante antes de puxar!", "error");
+            return;
+        }
+
+        // Compara arrays
+        let isCorrect = selectedBooks.length === config.correctSequence.length;
+        if (isCorrect) {
+            for (let i = 0; i < selectedBooks.length; i++) {
+                if (selectedBooks[i] !== config.correctSequence[i]) {
+                    isCorrect = false;
+                    break;
+                }
+            }
+        }
+
+        if (isCorrect) {
+            showMessage(config.successMsg, "success");
+        } else {
+            showMessage("❌ Você puxa os livros na sequência escolhida... Nada acontece. Parece ser a ordem incorreta.", "error");
+        }
+    }
+
+    function showMessage(text, type) {
+        const msgBox = document.getElementById('feedbackMessage');
+        msgBox.innerText = text;
+        msgBox.className = "message-box " + (type === "success" ? "message-success" : "message-error");
+        msgBox.style.display = "block";
+    }
+
+    function hideMessage() {
+        const msgBox = document.getElementById('feedbackMessage');
+        msgBox.style.display = "none";
+    }
+
+    function updateClueDisplay() {
+        document.getElementById('clueText').innerText = config.clue;
+    }
+
+    // PAINEL DO MESTRE LOGIC
+    function toggleAdminPanel() {
+        const panel = document.getElementById('adminPanel');
+        const isHidden = panel.style.display === "none" || panel.style.display === "";
+        
+        if (isHidden) {
+            panel.style.display = "block";
+            document.getElementById('adminClueInput').value = config.clue;
+            document.getElementById('adminSuccessInput').value = config.successMsg;
+            adminTempSequence = [...config.correctSequence];
+            renderAdminAuthors();
+        } else {
+            panel.style.display = "none";
+        }
+    }
+
+    function renderAdminAuthors() {
+        const container = document.getElementById('adminAuthorsList');
+        container.innerHTML = '';
+
+        ALL_AUTHORS.forEach(author => {
+            const chip = document.createElement('div');
+            const idx = adminTempSequence.indexOf(author);
+            chip.className = 'author-chip' + (idx !== -1 ? ' active' : '');
+            chip.innerText = (idx !== -1 ? `(${idx + 1}) ` : '') + author;
+            
+            chip.onclick = () => {
+                if (idx !== -1) {
+                    adminTempSequence.splice(idx, 1);
+                } else {
+                    adminTempSequence.push(author);
+                }
+                renderAdminAuthors();
+            };
+
+            container.appendChild(chip);
+        });
+
+        document.getElementById('adminCurrentSeqText').innerText = 
+            "Sequência Atual: " + (adminTempSequence.length > 0 ? adminTempSequence.join(" ➔ ") : "Nenhuma");
+    }
+
+    function clearAdminSequence() {
+        adminTempSequence = [];
+        renderAdminAuthors();
+    }
+
+    function saveAdminSettings() {
+        if (adminTempSequence.length === 0) {
+            alert("Por favor, selecione pelo menos 1 autor para a sequência!");
+            return;
+        }
+
+        config.clue = document.getElementById('adminClueInput').value;
+        config.successMsg = document.getElementById('adminSuccessInput').value;
+        config.correctSequence = [...adminTempSequence];
+
+        saveConfigToStorage();
+        updateClueDisplay();
+        resetSelection();
+        
+        document.getElementById('adminPanel').style.display = "none";
+        showMessage(" Configurações salvas pelo Mestre com sucesso!", "success");
+    }
+</script>
+</body>
+</html>
