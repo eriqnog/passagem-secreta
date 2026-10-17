@@ -384,6 +384,90 @@
 </div>
 
 <script>
+    // GERADOR DE SOM VIA WEB AUDIO API (NÃO PRECISA DE ARQUIVOS EXTERNOS)
+    let audioCtx = null;
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+
+    // Som de clique seco (ao puxar/clicar em um livro)
+    function playClickSound() {
+        try {
+            initAudio();
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.08);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.08);
+        } catch(e) {}
+    }
+
+    // Som de erro (falha na combinação)
+    function playErrorSound() {
+        try {
+            initAudio();
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(70, audioCtx.currentTime + 0.15);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        } catch(e) {}
+    }
+
+    // Som de sucesso / Abertura de passagem secreta (Rangido e acorde épico)
+    function playSuccessSound() {
+        try {
+            initAudio();
+            // Tom grave simulando porta pesada abrindo
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(60, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(110, audioCtx.currentTime + 0.8);
+            gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 1.2);
+
+            // Notas de vitória complementares
+            setTimeout(() => {
+                let osc2 = audioCtx.createOscillator();
+                let gain2 = audioCtx.createGain();
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(330, audioCtx.currentTime);
+                osc2.frequency.setValueAtTime(440, audioCtx.currentTime + 0.2);
+                osc2.frequency.setValueAtTime(550, audioCtx.currentTime + 0.4);
+                gain2.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.8);
+                osc2.connect(gain2);
+                gain2.connect(audioCtx.destination);
+                osc2.start();
+                osc2.stop(audioCtx.currentTime + 0.8);
+            }, 400);
+        } catch(e) {}
+    }
+
+
     // LISTA PADRÃO DE LIVROS/AUTORES
     const ALL_AUTHORS = [
         "Machado de Assis",
@@ -445,7 +529,10 @@
 
             const btn = document.createElement('div');
             btn.className = 'book-btn' + (isSelected ? ' selected' : '');
-            btn.onclick = () => toggleBookSelection(author);
+            btn.onclick = () => {
+                playClickSound();
+                toggleBookSelection(author);
+            };
 
             btn.innerHTML = `<span>${author}</span>`;
 
@@ -488,6 +575,7 @@
     }
 
     function resetSelection() {
+        playClickSound();
         selectedBooks = [];
         renderPlayerShelf();
         hideMessage();
@@ -495,9 +583,11 @@
 
     // VERIFICA SE A COMBINAÇÃO ESTÁ CORRETA
     function checkSolution() {
+        playClickSound();
         const msgBox = document.getElementById('feedbackMessage');
         
         if (selectedBooks.length === 0) {
+            playErrorSound();
             showMessage("Selecione pelo menos um livro na estante antes de puxar!", "error");
             return;
         }
@@ -514,8 +604,10 @@
         }
 
         if (isCorrect) {
+            playSuccessSound();
             showMessage(config.successMsg, "success");
         } else {
+            playErrorSound();
             showMessage("❌ Você puxa os livros na sequência escolhida... Nada acontece. Parece ser a ordem incorreta.", "error");
         }
     }
@@ -538,6 +630,7 @@
 
     // PAINEL DO MESTRE LOGIC
     function toggleAdminPanel() {
+        playClickSound();
         const panel = document.getElementById('adminPanel');
         const isHidden = panel.style.display === "none" || panel.style.display === "";
         
@@ -563,6 +656,7 @@
             chip.innerText = (idx !== -1 ? `(${idx + 1}) ` : '') + author;
             
             chip.onclick = () => {
+                playClickSound();
                 if (idx !== -1) {
                     adminTempSequence.splice(idx, 1);
                 } else {
@@ -579,17 +673,19 @@
     }
 
     function clearAdminSequence() {
+        playClickSound();
         adminTempSequence = [];
         renderAdminAuthors();
     }
 
     function saveAdminSettings() {
+        playClickSound();
         if (adminTempSequence.length === 0) {
             alert("Por favor, selecione pelo menos 1 autor para a sequência!");
             return;
         }
 
-        config.clue = document.getElementById('adminClueInput').value;
+        config.clue = document.getElementById('adminClueInput5').value || document.getElementById('adminClueInput').value;
         config.successMsg = document.getElementById('adminSuccessInput').value;
         config.correctSequence = [...adminTempSequence];
 
@@ -598,7 +694,7 @@
         resetSelection();
         
         document.getElementById('adminPanel').style.display = "none";
-        showMessage(" Configurações salvas pelo Mestre com sucesso!", "success");
+        showMessage("⚙ Configurações salvas pelo Mestre com sucesso!", "success");
     }
 </script>
 </body>
